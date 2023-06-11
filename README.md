@@ -2,6 +2,7 @@
 Predicts outcomes of the TT Elite Series tournaments by analyzing previous tournament data (https://www.tt-series.com/)
 
 TODO: Automatically grab latest data and upcoming tourney schedules from https://www.tt-series.com/ (Currently statically parsing from https://www.tt-series.com/1176-results-11-06-2023-afternoom-tournament-hsc/ and predicting input tournaments, as shown below)
+TODO: Deduplicate the overall player stats from predictions output
 
 ```
 -p https://www.tt-series.com/1178-results-11-06-2023-evening-tournament-hsc/ https://www.tt-series.com/1179-results-11-06-2023-night-tournament-osp/ https://www.tt-series.com/1180-results-11-06-2023-night-tournament-hsc/ https://www.tt-series.com/1181-results-12-06-2023-morning-tournament-osp/ https://www.tt-series.com/1182-results-12-06-2023-morning-tournament-hsc/
