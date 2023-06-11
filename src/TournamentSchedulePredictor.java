@@ -1,9 +1,13 @@
+import dnl.utils.text.table.TextTable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
+import java.sql.Date;
+import java.sql.Time;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,22 +24,22 @@ public class TournamentSchedulePredictor {
         this.players = players;
     }
 
-    public void predict() throws IOException {
+    public String predict() throws IOException {
         Document document;
         try {
             document = Jsoup.connect(tourneyUrl).get();
         } catch (IllegalArgumentException argumentException) {
             System.out.println("Invalid tourney URL: " + tourneyUrl);
-            return;
+            return "";
         }
         Element scheduleTable = document.select("table").last(); // Select the first table element
         Map<String, String> playerLastNameToFullName = getPlayerLastNamesToFullNames(document.select("table").first());
-        Elements rows = scheduleTable.select("tr"); // Select all rows in the table
+        Elements scheduleRows = scheduleTable.select("tr"); // Select all rows in the table
 
         List<TournamentMatchUp> unfinishedMatchUps = new ArrayList<>();
 
-        for (int i = 2; i < rows.size(); i++) { // Start from index 2 to skip the first two header rows
-            Element row = rows.get(i);
+        for (int i = 2; i < scheduleRows.size(); i++) { // Start from index 2 to skip the first two header rows
+            Element row = scheduleRows.get(i);
             Elements columns = row.select("td");
 
             // Extract data from each column
@@ -55,7 +59,7 @@ public class TournamentSchedulePredictor {
             }
         }
 
-        performPrediction(unfinishedMatchUps, playerLastNameToFullName);
+        return performPrediction(unfinishedMatchUps, playerLastNameToFullName);
     }
 
     private Map<String, String> getPlayerLastNamesToFullNames(Element matchUpTable) {
@@ -88,24 +92,19 @@ public class TournamentSchedulePredictor {
         return lastNamesToFullNames;
     }
 
-    private void performPrediction(List<TournamentMatchUp> unfinishedMatchUps, Map<String, String> playerLastNameToFullName) throws IOException {
-        List<HeadsUpResults> results = new ArrayList<>();
+    private String performPrediction(List<TournamentMatchUp> unfinishedMatchUps, Map<String, String> playerLastNameToFullName) throws IOException {
         for (TournamentMatchUp matchUp : unfinishedMatchUps) {
             String player1FullName = matchUp.getPlayer1FullName();
             String player2FullName = matchUp.getPlayer2FullName();
             TableTennisPlayer player1 = players.computeIfAbsent(player1FullName, TableTennisPlayer::new);
             TableTennisPlayer player2 = players.computeIfAbsent(player2FullName, TableTennisPlayer::new);
             HeadsUpResults player2HeadsUpResults = player1.getHeadsUpResultsForOpponent(player2);
-          //  if (player2HeadsUpResults.getTotalMatchesTogether() >= 8 &&
-       //             (player2HeadsUpResults.getPlayer2MatchOdds() >= 68
-      //                      || player2HeadsUpResults.getPlayer2MatchOdds() <= 27)) {
-                results.add(player2HeadsUpResults);
-       //     }
+            matchUp.setHeadsUpResults(player2HeadsUpResults);
         }
-        writePredictionsToFile(results, playerLastNameToFullName);
+        return writePredictionsToFile(unfinishedMatchUps, playerLastNameToFullName);
     }
 
-    private void writePredictionsToFile(List<HeadsUpResults> results, Map<String, String> playerLastNameToFullName) throws IOException {
+    private String writePredictionsToFile(List<TournamentMatchUp> tournamentResults, Map<String, String> playerLastNameToFullName) throws IOException {
         final String playerStr = getPlayerStr(playerLastNameToFullName);
         final StringBuilder builder = new StringBuilder();
         builder.append("===============================================================\n");
@@ -115,13 +114,43 @@ public class TournamentSchedulePredictor {
         builder.append(playerStr).append("\n");
         builder.append("===============================================================\n");
         builder.append("===============================================================\n\n");
-        for (HeadsUpResults headsUpResults : results) {
+        int numMatches = tournamentResults.size();
+        int numColumns = 6;
+        Object[][] data = new Object[numMatches][numColumns];
+        final String[] columnNames = new String[] {
+                "MatchTimeEST", "Player 1 Name", "Player 2 Name", "Player 1 Stats", "Player 2 Stats", "Predictions"
+        };
+        for (int ii=0; ii<tournamentResults.size(); ii++) {
+            TournamentMatchUp tournamentMatchUp = tournamentResults.get(ii);
+            final HeadsUpResults headsUpResults = tournamentMatchUp.getHeadsUpResults();
             TableTennisPlayer player1 = players.computeIfAbsent(headsUpResults.getPlayer1(), TableTennisPlayer::new);
             TableTennisPlayer player2 = players.computeIfAbsent(headsUpResults.getPlayer2(), TableTennisPlayer::new);
-            builder.append(headsUpResults.createHeadsUpString(player1, player2));
+
+
+            String matchHourEst = getMatchHourEst(tournamentMatchUp.getMatchHour());
+            data[ii][0] = matchHourEst;
+            String player1ShortDesc = HeadsUpResults.createShortShortPlayerDescription(player1);
+            String player2ShortDesc = HeadsUpResults.createShortShortPlayerDescription(player2);
+            data[ii][1] = player1.getName();
+            data[ii][2] = player2.getName();
+            data[ii][3] = player1ShortDesc;
+            data[ii][4] = player2ShortDesc;
+            data[ii][5] = headsUpResults.createPredictionStr();
+            //builder.append(headsUpResults.createHeadsUpString(player1, player2));
         }
-        writeStringToFile(builder.toString(), TableTennisTournamentPredictor.getTournamentName(tourneyUrl)
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(os);
+        TextTable textTable = new TextTable(columnNames, data);
+        textTable.printTable(ps, 0);
+        String output = os.toString("UTF8");
+        writeStringToFile(output, TableTennisTournamentPredictor.getTournamentName(tourneyUrl)
         .replace("https://www.tt-series.com/", "").replace("/", ""));
+        return output;
+    }
+
+
+    private String getMatchHourEst(String matchHour) {
+        return Time.valueOf(matchHour.trim() + ":00").toLocalTime().minusHours(6).toString();
     }
 
     private String getPlayerStr(Map<String, String> playerLastNameToFullName) {

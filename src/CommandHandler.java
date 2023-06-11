@@ -92,12 +92,24 @@ public class CommandHandler {
             return;
         }
         final String[] urls = tourneyLink[0].trim().split("\\s");
+        final StringBuilder builder = new StringBuilder();
+        builder.append("====================================================================\n");
+        builder.append("====================================================================\n");
+        builder.append("==========================ALL PREDICTIONS===========================\n");
+        builder.append("====================================================================\n");
+        builder.append("====================================================================\n\n\n");
         for (String tourneyUrl : urls) {
             String trimmedUrl = tourneyUrl.trim();
+            builder.append("================================================================================\n");
+            builder.append("==  ").append(trimmedUrl).append("  ==\n");
+            builder.append("================================================================================\n");
             TournamentSchedulePredictor tournamentSchedulePredictor =
                     new TournamentSchedulePredictor(trimmedUrl, players);
-            tournamentSchedulePredictor.predict();
+            String res = tournamentSchedulePredictor.predict();
+            builder.append(res);
+            builder.append("================================================================================\n\n\n");
         }
+        TournamentSchedulePredictor.writeStringToFile(builder.toString(), "ALL_REQUESTED_TOURNEYS");
     }
 
 

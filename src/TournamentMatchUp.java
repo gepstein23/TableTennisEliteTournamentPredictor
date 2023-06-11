@@ -4,6 +4,7 @@ public class TournamentMatchUp {
     private String player1FullName;
     private String player2FullName;
     private String result;
+    private HeadsUpResults headsUpResults;
 
     public TournamentMatchUp(String matchHour, String matchOrder, String player1FullName, String player2FullName, String result) {
         this.matchHour = matchHour;
@@ -55,5 +56,13 @@ public class TournamentMatchUp {
 
     public void setResult(String result) {
         this.result = result;
+    }
+
+    public HeadsUpResults getHeadsUpResults() {
+        return headsUpResults;
+    }
+
+    public void setHeadsUpResults(HeadsUpResults headsUpResults) {
+        this.headsUpResults = headsUpResults;
     }
 }

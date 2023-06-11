@@ -1,4 +1,7 @@
+import java.text.DecimalFormat;
+
 public class HeadsUpResults {
+
     public String getPlayer1() {
         return player1;
     }
@@ -48,20 +51,19 @@ public class HeadsUpResults {
         return player1SetWins + player2SetWins;
     }
 
-    public double getPlayer1MatchOdds() {
-        return (double) getPlayer1MatchWins() / getTotalMatchesTogether() * 100;
+    public String getPlayer1MatchOdds() {
+        return getPercentage(getPlayer1MatchWins(), getTotalMatchesTogether());
+    }
+    public String getPlayer2MatchOdds() {
+        return getPercentage(getPlayer2MatchWins(), getTotalMatchesTogether());
     }
 
-    public double getPlayer2MatchOdds() {
-        return (double) getPlayer2MatchWins() / getTotalMatchesTogether() * 100;
+    public String getPlayer1SetOdds() {
+        return getPercentage(getPlayer1SetWins(), getTotalSetsTogether());
     }
 
-    public double getPlayer1SetOdds() {
-        return (double) getPlayer1SetWins() / getTotalSetsTogether() * 100;
-    }
-
-    public double getPlayer2SetOdds() {
-        return (double) getPlayer2SetWins()/ getTotalSetsTogether() * 100;
+    public String getPlayer2SetOdds() {
+        return getPercentage(getPlayer2SetWins(), getTotalSetsTogether());
     }
 
     public void addPlayer1SetWins(int newSetsWonAgainst) {
@@ -126,12 +128,47 @@ public class HeadsUpResults {
         return builder.toString();
     }
 
-    public static float getPercentage(int won, int total) {
+    public static String getPercentage(int won, int total) {
         final float div = (float) Integer.toUnsignedLong(won) / (float) Integer.toUnsignedLong(total);
-        return div * 100;
+        DecimalFormat df = new DecimalFormat();
+        df.setMaximumFractionDigits(1);
+        return df.format(div * 100);
     }
 
     public String createHeadsUpString(TableTennisPlayer player1, TableTennisPlayer player2) {
         return this.toString(createShortPlayerDescription(player1), createShortPlayerDescription(player2));
+    }
+
+    public String createScheduleRowString(TableTennisPlayer player1, TableTennisPlayer player2, TournamentMatchUp tournamentMatchUp) {
+        return this.toString(createShortPlayerDescription(player1), createShortPlayerDescription(player2));
+    }
+
+    public static String createShortShortPlayerDescription(TableTennisPlayer player) {
+        final StringBuilder builder = new StringBuilder();
+        builder.append(String.format("matchWs %s/%s (%s%%), setWs: %s/%s (%s%%), tourneyWs: %s/%s (%s%%)",
+                player.getMatchesWon(),
+                player.getMatchesPlayed(), player.getMatchesPlayed() == 0 ? "NaN" : getPercentage(player.getMatchesWon(), player.getMatchesPlayed()),
+                player.getSetsWon(),
+                player.getSetsPlayed(), player.getSetsPlayed() == 0 ? "NaN" : getPercentage(player.getSetsWon(), player.getSetsPlayed()),
+                        player.getTournamentsWon(),
+                        player.getNumTournamentsPlayed(), getPercentage(player.getTournamentsWon(), player.getNumTournamentsPlayed())));
+        return builder.toString();
+    }
+
+    public String createPredictionStr() {
+        Object player1LastName = player1.split(", ")[0];
+        Object player2LastName = player2.split(", ")[0];
+        int totalMatchesTogether = getTotalMatchesTogether();
+        int totalSetsTogether = getTotalSetsTogether();
+        final StringBuilder builder = new StringBuilder();
+        if (totalMatchesTogether > 0) {
+            builder.append(String.format("|| %s matchWinOdds: %s%% (%s/%s), setWinOdds: %s%% (%s/%s)",
+                    player1LastName, getPlayer1MatchOdds(), getPlayer1MatchWins(), totalMatchesTogether,
+                    getPlayer1SetOdds(), getPlayer1SetWins(), totalSetsTogether));
+
+        } else {
+            builder.append("First Match Together\n");
+        }
+        return builder.toString();
     }
 }
