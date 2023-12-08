@@ -113,12 +113,18 @@ public class TournamentSchedulePredictor {
         builder.append("= PLAYERS = \n");
         builder.append(playerStr).append("\n");
         builder.append("===============================================================\n");
-        builder.append("===============================================================\n\n");
+        builder.append("===============================================================\n");
+        for (String fullName: playerLastNameToFullName.values()) {
+            builder.append("~~~~~~").append(fullName).append(" Stats: ~~~~~~\n");
+            TableTennisPlayer player1 = players.computeIfAbsent(fullName, TableTennisPlayer::new);
+            builder.append("    " + HeadsUpResults.createShortShortPlayerDescription(player1)).append("\n");
+        }
+        builder.append("\n\n");
         int numMatches = tournamentResults.size();
-        int numColumns = 6;
+        int numColumns = 4;
         Object[][] data = new Object[numMatches][numColumns];
         final String[] columnNames = new String[] {
-                "MatchTimeEST", "Player 1 Name", "Player 2 Name", "Player 1 Stats", "Player 2 Stats", "Predictions"
+                "MatchTimeEST", "Player 1 Name", "Player 2 Name", "Predictions"
         };
         for (int ii=0; ii<tournamentResults.size(); ii++) {
             TournamentMatchUp tournamentMatchUp = tournamentResults.get(ii);
@@ -129,20 +135,20 @@ public class TournamentSchedulePredictor {
 
             String matchHourEst = getMatchHourEst(tournamentMatchUp.getMatchHour());
             data[ii][0] = matchHourEst;
-            String player1ShortDesc = HeadsUpResults.createShortShortPlayerDescription(player1);
-            String player2ShortDesc = HeadsUpResults.createShortShortPlayerDescription(player2);
+           // String player1ShortDesc = HeadsUpResults.createShortShortPlayerDescription(player1);
+           // String player2ShortDesc = HeadsUpResults.createShortShortPlayerDescription(player2);
             data[ii][1] = player1.getName();
             data[ii][2] = player2.getName();
-            data[ii][3] = player1ShortDesc;
-            data[ii][4] = player2ShortDesc;
-            data[ii][5] = headsUpResults.createPredictionStr();
+           // data[ii][3] = player1ShortDesc;
+          //  data[ii][4] = player2ShortDesc;
+            data[ii][3] = headsUpResults.createPredictionStr();
             //builder.append(headsUpResults.createHeadsUpString(player1, player2));
         }
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(os);
         TextTable textTable = new TextTable(columnNames, data);
         textTable.printTable(ps, 0);
-        String output = os.toString("UTF8");
+        String output = builder.toString() + os.toString("UTF8");
         writeStringToFile(output, TableTennisTournamentPredictor.getTournamentName(tourneyUrl)
         .replace("https://www.tt-series.com/", "").replace("/", ""));
         return output;

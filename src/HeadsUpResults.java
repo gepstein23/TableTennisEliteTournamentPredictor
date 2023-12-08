@@ -157,12 +157,11 @@ public class HeadsUpResults {
 
     public String createPredictionStr() {
         Object player1LastName = player1.split(", ")[0];
-        Object player2LastName = player2.split(", ")[0];
         int totalMatchesTogether = getTotalMatchesTogether();
         int totalSetsTogether = getTotalSetsTogether();
         final StringBuilder builder = new StringBuilder();
         if (totalMatchesTogether > 0) {
-            builder.append(String.format("|| %s matchWinOdds: %s%% (%s/%s), setWinOdds: %s%% (%s/%s)",
+            builder.append(String.format("%s MatchWinOdds: %s%% (%s/%s) ||| SetWinOdds: %s%% (%s/%s)",
                     player1LastName, getPlayer1MatchOdds(), getPlayer1MatchWins(), totalMatchesTogether,
                     getPlayer1SetOdds(), getPlayer1SetWins(), totalSetsTogether));
 

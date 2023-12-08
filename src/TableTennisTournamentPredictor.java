@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class TableTennisTournamentPredictor {
     private static final String FIRST_TOURNAMENT_RESULTS_URL =
-            "https://www.tt-series.com/1176-results-11-06-2023-afternoom-tournament-hsc/";
+            "https://www.tt-series.com/1189-results-13-06-2023-morning-tournament-hsc/";
     private Map<String, TableTennisPlayer> players;
     private Collection<CompletedTournament> completedTournaments;
     private int targetNumTourneys;
